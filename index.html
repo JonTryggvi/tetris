@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>tetris</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet"/>
+    <link rel="stylesheet" href="scss/styles.scss">
+</head>
+<body>
+    <div class="grid">
+        <canvas id="board" class="game-board"></canvas>
+        <div class="right-column">
+            <div>
+                <h1>TETRIS</h1>
+                <h2>Based on <a href="https://medium.com/@michael.karen/learning-modern-javascript-with-tetris-92d532bcd057">Learning Modern JavaScript with Tetris</a> with slight changes in structure</h2>
+                <p>Score: <span id="score">0</span></p>
+                <p>Lines: <span id="lines">0</span></p>
+                <p>Level: <span id="level">0</span></p>
+                <canvas id="next" class="next"></canvas>
+            </div>
+            <div class="direction-controll">
+                <button class="btnControll" type="button" data-key-code="38">up</button>
+                <button class="btnControll" type="button" data-key-code="37">left</button class="btnControll">
+                <button class="btnControll" type="button" data-key-code="40">down</button type="button">
+                <button class="btnControll" type="button" data-key-code="39">right</button type="button">
+            </div>
+            <button type="button" class="play-button">Play</button>
+        </div>
+    </div>
+  
+    <script src="app.js"></script>
+</body>
+</html>
