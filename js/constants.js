@@ -95,6 +95,7 @@ let moves = {
 
 
 let accountValues = {
+  topscore: localStorage.hasOwnProperty('topscore') ? localStorage.topscore : 0,
   score: 0,
   level: 0,
   lines: 0

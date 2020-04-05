@@ -1,16 +1,18 @@
 * {
   font-family: 'Press Start 2P', cursive;
+  color: white;
 }
 body {
   display: flex !important;
   justify-content: center;
+  background-color: grey;
 }
 h2 {
   font-size: 14px;
 }
 .grid {
   display: grid;
-  grid-template-columns: 320px 200px;
+  grid-template-columns: 300px 320px 250px ;
 }
 
 .right-column {
@@ -18,7 +20,14 @@ h2 {
   flex-direction: column;
   justify-content: space-between;
 }
-
+.topscore {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.score-container {
+  text-transform: uppercase;
+}
 .game-board {
   border: solid 2px;
 }
@@ -28,12 +37,15 @@ h2 {
   font-size: 16px;
   padding: 15px 30px;
   cursor: pointer;
+  margin-top: 20px;
+  max-width: 200px;
 }
 
 .direction-controll {
   display: inline-flex;
   justify-content: space-between;
   flex-flow: row wrap;
+  max-width: 200px;
   & .btnControll{
     display: inline-flex;
     height: 44px;
@@ -45,6 +57,7 @@ h2 {
     margin-left: 32%;
     margin-right: 32%;
     margin-bottom: 5px;
-   
+  
   }
+  
 }
