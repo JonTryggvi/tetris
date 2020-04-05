@@ -1,4 +1,5 @@
-import { moves, BLOCK_SIZE, KEY, LEVEL, account , time} from './js/constants';
+import $ from 'jquery'
+import { moves, BLOCK_SIZE, KEY, LEVEL, account, time } from './js/constants';
 import {Board, POINTS} from './js/board'
 // import Piece from './js/Piece'
 const canvas = document.getElementById('board');
@@ -9,6 +10,10 @@ let requestId;
 let board = new Board(ctx, ctxNext);
 addEventListener();
 initNext();
+get_topscore();
+set_top_list();
+!localStorage.hasOwnProperty('topscore') ?
+  localStorage.topscore = 0 : account.topscore = localStorage.topscore
 
 function initNext() {
   // Calculate size of canvas from constants.
@@ -23,12 +28,12 @@ function addEventListener() {
 }
 function handleEvent(event) {
   let keyCode = event.keyCode || event.target.dataset.keyCode
-  console.log(event.keyCode)
   if (keyCode === KEY.P) {
     pause();
   }
   if (keyCode === KEY.ESC) {
     gameOver();
+    updateUserScore(account.score)
   } else if (moves[keyCode]) {
     event.preventDefault();
     // Get new state
@@ -39,18 +44,21 @@ function handleEvent(event) {
         account.score += POINTS.HARD_DROP;
         board.piece.move(p);
         p = moves[KEY.DOWN](board.piece);
+        updateUserScore(account.score)
       }
       board.piece.hardDrop();     
     } else if (board.valid(p)) {
       board.piece.move(p);
       if (keyCode === KEY.DOWN) {
-        account.score += POINTS.SOFT_DROP;         
+        account.score += POINTS.SOFT_DROP;  
+        updateUserScore(account.score)
       }
     }
   }
 }
 
 function resetGame() {
+ 
   account.score = 0;
   account.lines = 0;
   account.level = 0;
@@ -58,6 +66,7 @@ function resetGame() {
   time.start = 0;
   time.elapsed = 0;
   time.level = LEVEL[account.level];
+  updateUserScore(account.score)
 }
 
 function play() {
@@ -77,6 +86,7 @@ function animate(now = 0) {
     time.start = now;
     if (!board.drop()) {
       gameOver();
+      
       return;
     }
   }
@@ -86,15 +96,21 @@ function animate(now = 0) {
 
   board.draw();
   requestId = requestAnimationFrame(animate);
+  if (localStorage.hasOwnProperty('topscore') && account.score > localStorage.topscore) {
+    localStorage.topscore = account.score;
+  }
 }
 
 function gameOver() {
+  updateUserScore(account.score)
+  
   cancelAnimationFrame(requestId);
   ctx.fillStyle = 'black';
   ctx.fillRect(1, 3, 8, 1.2);
   ctx.font = '1px Arial';
   ctx.fillStyle = 'red';
   ctx.fillText('GAME OVER', 1.8, 4);
+  updateIOList(JSON.parse(localStorage.currentUser))
 }
 
 function pause() {
@@ -112,7 +128,128 @@ function pause() {
   ctx.fillStyle = 'yellow';
   ctx.fillText('PAUSED', 3, 4);
 }
+function updateUserScore(score) {
+  let lsUser = JSON.parse(localStorage.currentUser)
+  lsUser.score = score;
+  localStorage.currentUser = JSON.stringify(lsUser)
+  updateToplist(score)
+}
+function registerUser() {
+  const modalCtnr = document.querySelector('.modal-contianer')
+  const modalInput = modalCtnr.querySelector('input')
+  const modalSubm = modalCtnr.querySelector('.btnSubm')
+  const modalkeep = modalCtnr.querySelector('.keepbtn')
+  const hasUsern = modalCtnr.querySelector('.has-username')
+  if (localStorage.hasOwnProperty('currentUser')) {
+    modalkeep.style.display = 'inline-block';
+    hasUsern.innerText = JSON.parse(localStorage.currentUser).name
+    modalkeep.onclick = e => {
+      modalCtnr.classList.remove('active')
+      play()
+    }
+  }
+  modalCtnr.classList.add('active')
+  modalSubm.onclick = (e) => {
+    const ajaxObj = {
+      action: 'save_user',
+      name: modalInput.value,
+      id: modalInput.value+'-'+Date.now(),
+      score: 0
+    }
+    localStorage.currentUser = JSON.stringify({
+      name: modalInput.value,
+      id: modalInput.value + '-' + Date.now(),
+      score: 0
+    });
+    postAjax(ajaxObj).done(res => {
+      modalCtnr.classList.remove('active')
+      play()
+    })
+  }
+}
+
+function updateIOList(payload) {
+  let ajaxObj = {
+    action: 'update_list',
+    name: payload.name,
+    id: payload.id,
+    score: payload.score
+  }
+  postAjax(ajaxObj).done(res => {
+    console.log('list_update :', res);
+    // localStorage.topList = '';
+    // localStorage.topList = JSON.stringify(res)
+  })
+}
+
+function get_topscore() {
+  const ajaxObj = {
+    action: 'get_list',
+  }
+  postAjax(ajaxObj).done(res => {
+    localStorage.topList = '';
+    localStorage.topList = 'no file' !== res.responseText ? JSON.stringify(res) : '[]';
+  })
+}
+
+function set_top_list() {
+  let currentUser = localStorage.hasOwnProperty('currentUser') ? JSON.parse(localStorage.currentUser) : false;
+  let aToplist = localStorage.hasOwnProperty('topList')  ? JSON.parse(localStorage.topList) : [];
+  let t = aToplist.sort((a, b) => a - b);
+  console.log(t)
+  let elTops = document.querySelector('.top-score .score-container');
+  elTops.innerHTML = '';
+  let items = '';
+  // t.push(currentUser)
+  t.forEach(item => {
+    items += `<li>${item.name} : ${item.score}</li>`
+  })
+  elTops.insertAdjacentHTML('afterbegin', items)
+}
+
+function updateToplist(score) {
+  let currentUser = JSON.parse(localStorage.currentUser);
+  let topList = localStorage.hasOwnProperty('topList') ? JSON.parse(localStorage.topList) : [];
+  
+  topList.map(item => {
+    if (item.id === currentUser.id) {
+      item.score = score;
+    }
+  })
+  let t = topList.sort((a, b) => a-b)
+  localStorage.topList = JSON.stringify(t)
+  set_top_list()
+  
+}
 
 const btn = document.querySelector('.play-button')
-btn.addEventListener('click', play);
+btn.addEventListener('click', registerUser);
+// btn.addEventListener('click', play);
 
+function postAjax(dataObj, files = false) {
+  let ajaxOptions = {
+    type: 'POST',
+    url: 'https://dev.jontryggvi.is/ajax.php',
+    data: dataObj,
+    dataType: 'json',
+    error(err) {
+      console.log(err);
+      return err
+    }
+  }
+  let ajaxOptionsWithFiles = {
+    url: 'https://dev.jontryggvi.is/ajax.php',
+    type: 'POST',
+    contentType: false,
+    processData: false,
+    data: dataObj,
+    error(err) {
+      console.log(err);
+      return err
+    },
+    cache: false
+
+  }
+  let options = files ? ajaxOptionsWithFiles : ajaxOptions;
+  return $.ajax(options);
+}
