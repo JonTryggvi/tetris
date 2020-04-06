@@ -9,7 +9,6 @@ const ctxNext = canvasNext.getContext('2d');
 let requestId;
 let board = new Board(ctx, ctxNext);
 let modalContainer = document.querySelector('.modal-contianer');
-console.log(modalContainer)
 addEventListener();
 initNext();
 get_topscore();
