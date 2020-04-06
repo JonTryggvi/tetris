@@ -8,6 +8,8 @@ const canvasNext = document.getElementById('next');
 const ctxNext = canvasNext.getContext('2d');
 let requestId;
 let board = new Board(ctx, ctxNext);
+let modalContainer = document.querySelector('.modal-contianer');
+console.log(modalContainer)
 addEventListener();
 initNext();
 get_topscore();
@@ -31,9 +33,11 @@ function handleEvent(event) {
   if (keyCode === KEY.P) {
     pause();
   }
-  if (keyCode === KEY.ESC) {
+  if (keyCode === KEY.ESC && requestId) {
     gameOver();
     updateUserScore(account.score)
+  } else if (modalContainer.classList.contains('active') && keyCode === KEY.ESC) {
+    modalContainer.classList.remove('active')
   } else if (moves[keyCode]) {
     event.preventDefault();
     // Get new state
@@ -102,15 +106,17 @@ function animate(now = 0) {
 }
 
 function gameOver() {
-  updateUserScore(account.score)
+  if (requestId) {
+    updateUserScore(account.score)
+    updateIOList(JSON.parse(localStorage.currentUser))
+    cancelAnimationFrame(requestId);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(1, 3, 8, 1.2);
+    ctx.font = '1px Arial';
+    ctx.fillStyle = 'red';
+    ctx.fillText('GAME OVER', 1.8, 4);
+  }
   
-  cancelAnimationFrame(requestId);
-  ctx.fillStyle = 'black';
-  ctx.fillRect(1, 3, 8, 1.2);
-  ctx.font = '1px Arial';
-  ctx.fillStyle = 'red';
-  ctx.fillText('GAME OVER', 1.8, 4);
-  updateIOList(JSON.parse(localStorage.currentUser))
 }
 
 function pause() {
@@ -149,23 +155,41 @@ function registerUser() {
     }
   }
   modalCtnr.classList.add('active')
-  modalSubm.onclick = (e) => {
-    const ajaxObj = {
-      action: 'save_user',
-      name: modalInput.value,
-      id: modalInput.value+'-'+Date.now(),
-      score: 0
-    }
-    localStorage.currentUser = JSON.stringify({
-      name: modalInput.value,
-      id: modalInput.value + '-' + Date.now(),
-      score: 0
-    });
-    postAjax(ajaxObj).done(res => {
-      modalCtnr.classList.remove('active')
-      play()
-    })
+  modalInput.onkeyup = e => {
+    e.target.value.length == 3 ? modalSubm.disabled = false : modalSubm.disabled = true;
+    
   }
+  modalInput.onkeydown = e => {
+    let keyCode = e.key 
+    if (keyCode == 'Enter') {
+      e.preventDefault()
+      this.value.length <
+      modalSubm.click()
+    }
+  }
+  modalSubm.onclick = (e) => {
+    if (modalInput.value.length == 3) {
+      modalSubm.disabled = false
+      const ajaxObj = {
+        action: 'save_user',
+        name: modalInput.value,
+        id: modalInput.value+'-'+Date.now(),
+        score: 0
+      }
+      localStorage.currentUser = JSON.stringify({
+        name: modalInput.value,
+        id: modalInput.value + '-' + Date.now(),
+        score: 0
+      });
+      postAjax(ajaxObj).done(res => {
+        modalCtnr.classList.remove('active')
+        play()
+      })
+    } else {
+      modalSubm.disabled = true
+    }
+      
+  } 
 }
 
 function updateIOList(payload) {
@@ -175,11 +199,12 @@ function updateIOList(payload) {
     id: payload.id,
     score: payload.score
   }
-  postAjax(ajaxObj).done(res => {
-    console.log('list_update :', res);
+  postAjax(ajaxObj)
+    // .done(res => {
+    // console.log('list_update :', res);
     // localStorage.topList = '';
     // localStorage.topList = JSON.stringify(res)
-  })
+  // })
 }
 
 function get_topscore() {
@@ -189,19 +214,16 @@ function get_topscore() {
   postAjax(ajaxObj).done(res => {
     localStorage.topList = '';
     localStorage.topList = 'no file' !== res.responseText ? JSON.stringify(res) : '[]';
+    set_top_list()
   })
 }
 
 function set_top_list() {
-  let currentUser = localStorage.hasOwnProperty('currentUser') ? JSON.parse(localStorage.currentUser) : false;
   let aToplist = localStorage.hasOwnProperty('topList')  ? JSON.parse(localStorage.topList) : [];
-  let t = aToplist.sort((a, b) => a - b);
-  console.log(t)
   let elTops = document.querySelector('.top-score .score-container');
   elTops.innerHTML = '';
   let items = '';
-  // t.push(currentUser)
-  t.forEach(item => {
+  aToplist.forEach(item => {
     items += `<li>${item.name} : ${item.score}</li>`
   })
   elTops.insertAdjacentHTML('afterbegin', items)
