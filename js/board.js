@@ -1,4 +1,4 @@
-import { COLS, ROWS, BLOCK_SIZE, KEY, LINES_PER_LEVEL, POINTS, LEVEL, ROTATION , COLORS, moves, account, time } from './constants';
+import { AUDIO_TRACKS, COLS, ROWS, BLOCK_SIZE, KEY, LINES_PER_LEVEL, POINTS, LEVEL, ROTATION , COLORS, moves, account, time } from './constants';
 import Piece from "./piece";
 
 class Board {
@@ -156,6 +156,8 @@ class Board {
 
   rotate(piece,direction) {
     // Clone with JSON for immutability.
+    // var play_rotate = new Audio(AUDIO_TRACKS['block-rotate']);
+    // play_rotate.play();
     let p = JSON.parse(JSON.stringify(piece));
     if(!piece.hardDropped){
       // Transpose matrix

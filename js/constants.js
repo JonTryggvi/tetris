@@ -118,4 +118,19 @@ function updateAccount(key, value) {
 
 let time = { start: 0, elapsed: 0, level: 0 }
 
-module.exports = { COLS, ROWS, BLOCK_SIZE, KEY, LINES_PER_LEVEL, SHAPES, POINTS, LEVEL, ROTATION, COLORS, moves, account, time }
+const AUDIO_TRACKS = {
+  'block-rotate': '/sounds/block-rotate.mp3',
+  'force-hit': '/sounds/force-hit.mp3',
+  'gameover': '/sounds/gameover.mp3',
+  'line-drop': '/sounds/line-drop.mp3',
+  'line-removal4': '/sounds/line-removal4.mp3',
+  'line-remove': '/sounds/line-remove.mp3',
+  'music': '/sounds/music.mp3',
+  'pause': '/sounds/pause.mp3',
+  'select': '/sounds/select.mp3',
+  'slow-hit': '/sounds/slow-hit.mp3',
+  'start': '/sounds/start.mp3',
+  'whoosh': '/sounds/whoosh.mp3'
+};
+
+module.exports = { AUDIO_TRACKS, COLS, ROWS, BLOCK_SIZE, KEY, LINES_PER_LEVEL, SHAPES, POINTS, LEVEL, ROTATION, COLORS, moves, account, time }
