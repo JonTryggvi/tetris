@@ -1,4 +1,4 @@
-import { SHAPES, COLORS } from './constants';
+import { AUDIO_TRACKS, SHAPES, COLORS } from './constants';
 class Piece {
   x;
   y;
@@ -36,6 +36,7 @@ class Piece {
   }
 
   move(p) {
+   
     if(!this.hardDropped){
       this.x = p.x;
       this.y = p.y;
@@ -45,6 +46,8 @@ class Piece {
 
   hardDrop(){
     this.hardDropped = true;
+    // var play_hard_drop = new Audio(AUDIO_TRACKS['force-hit']);
+    // play_hard_drop.play();
   }
 
   setStartingPosition() {

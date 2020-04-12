@@ -1,7 +1,9 @@
 import $ from 'jquery'
-import { moves, BLOCK_SIZE, KEY, LEVEL, account, time } from './js/constants';
+import { AUDIO_TRACKS, moves, BLOCK_SIZE, KEY, LEVEL, account, time } from './js/constants';
 import {Board, POINTS} from './js/board'
 // import Piece from './js/Piece'
+
+
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const canvasNext = document.getElementById('next');
@@ -51,6 +53,8 @@ function handleEvent(event) {
       }
       board.piece.hardDrop();     
     } else if (board.valid(p)) {
+      // var play_move = new Audio(AUDIO_TRACKS['slow-hit']);
+      // play_move.play();
       board.piece.move(p);
       if (keyCode === KEY.DOWN) {
         account.score += POINTS.SOFT_DROP;  
@@ -115,7 +119,8 @@ function gameOver() {
     ctx.fillStyle = 'red';
     ctx.fillText('GAME OVER', 1.8, 4);
   }
-  
+  // var play_gameover = new Audio(AUDIO_TRACKS['gameover']);
+  // play_gameover.play();
 }
 
 function pause() {
@@ -155,7 +160,7 @@ function registerUser() {
   }
   modalCtnr.classList.add('active')
   modalInput.onkeyup = e => {
-    e.target.value.length == 3 ? modalSubm.disabled = false : modalSubm.disabled = true;
+    e.target.value.length <= 3 && e.target.value.length > 0 ? modalSubm.disabled = false : modalSubm.disabled = true;
     
   }
   modalInput.onkeydown = e => {
@@ -167,7 +172,7 @@ function registerUser() {
     }
   }
   modalSubm.onclick = (e) => {
-    if (modalInput.value.length == 3) {
+    if (modalInput.value.length <= 3 && modalInput.value.length > 0) {
       modalSubm.disabled = false
       const ajaxObj = {
         action: 'save_user',
@@ -183,6 +188,7 @@ function registerUser() {
       postAjax(ajaxObj).done(res => {
         modalCtnr.classList.remove('active')
         play()
+        set_top_list()
       })
     } else {
       modalSubm.disabled = true
@@ -199,11 +205,7 @@ function updateIOList(payload) {
     score: payload.score
   }
   postAjax(ajaxObj)
-    // .done(res => {
-    // console.log('list_update :', res);
-    // localStorage.topList = '';
-    // localStorage.topList = JSON.stringify(res)
-  // })
+
 }
 
 function get_topscore() {
@@ -218,11 +220,16 @@ function get_topscore() {
 }
 
 function set_top_list() {
-  let aToplist = localStorage.hasOwnProperty('topList')  ? JSON.parse(localStorage.topList) : [];
+  let aToplist = localStorage.hasOwnProperty('topList') ? JSON.parse(localStorage.topList) : [];
+  let currentUser = localStorage.hasOwnProperty('currentUser') ? JSON.parse(localStorage.currentUser) : false;
+  if (!!currentUser && !aToplist.some(item => item.id === currentUser.id)) {
+    aToplist.push(currentUser)
+  }
+  let t = [...aToplist].sort((a, b) => b.score - a.score)
   let elTops = document.querySelector('.top-score .score-container');
   elTops.innerHTML = '';
   let items = '';
-  aToplist.forEach(item => {
+  t.forEach(item => {
     items += `<li>${item.name} : ${item.score}</li>`
   })
   elTops.insertAdjacentHTML('afterbegin', items)
