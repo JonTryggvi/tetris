@@ -1,8 +1,7 @@
 import $ from 'jquery'
-import { AUDIO_TRACKS, moves, BLOCK_SIZE, KEY, LEVEL, account, time } from './js/constants';
+import { SVG_ICONS, AUDIO_TRACKS, moves, BLOCK_SIZE, KEY, LEVEL, account, time } from './js/constants';
 import {Board, POINTS} from './js/board'
 // import Piece from './js/Piece'
-
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -11,6 +10,23 @@ const ctxNext = canvasNext.getContext('2d');
 let requestId;
 let board = new Board(ctx, ctxNext);
 let modalContainer = document.querySelector('.modal-contianer');
+let musicObj = AUDIO_TRACKS.tmusic
+let btnMusic = document.querySelector('.music')
+btnMusic.innerHTML = SVG_ICONS.play
+btnMusic.onclick = e => {
+  let btn = e.target.closest('.music')
+  btn.innerHTML = '';
+  if (btn.classList.contains('music-active')) {
+    btn.innerHTML = SVG_ICONS.play
+    btn.classList.remove('music-active')
+    musicObj.pause()
+    musicObj.currentTime = 0;
+  } else {
+    btn.innerHTML = SVG_ICONS.stop
+    btn.classList.add('music-active')
+    musicObj.play()
+  }
+} 
 addEventListener();
 initNext();
 get_topscore();
@@ -119,8 +135,7 @@ function gameOver() {
     ctx.fillStyle = 'red';
     ctx.fillText('GAME OVER', 1.8, 4);
   }
-  // var play_gameover = new Audio(AUDIO_TRACKS['gameover']);
-  // play_gameover.play();
+
 }
 
 function pause() {
@@ -173,6 +188,7 @@ function registerUser() {
   }
   modalSubm.onclick = (e) => {
     if (modalInput.value.length <= 3 && modalInput.value.length > 0) {
+    
       modalSubm.disabled = false
       const ajaxObj = {
         action: 'save_user',
@@ -229,8 +245,18 @@ function set_top_list() {
   let elTops = document.querySelector('.top-score .score-container');
   elTops.innerHTML = '';
   let items = '';
+  let activeClass = '';
   t.forEach(item => {
-    items += `<li>${item.name} : ${item.score}</li>`
+    if (item.name.length == 2) {
+      item.name = item.name + '_'
+    }
+    if (item.name.length == 1) {
+      item.name = item.name + '__'
+    }
+
+    activeClass = item.id === currentUser.id ? 'active-player' : ''
+
+    items += `<li class="${activeClass}" >${item.name} : ${item.score}</li>`
   })
   elTops.insertAdjacentHTML('afterbegin', items)
 }
@@ -281,3 +307,4 @@ function postAjax(dataObj, files = false) {
   let options = files ? ajaxOptionsWithFiles : ajaxOptions;
   return $.ajax(options);
 }
+

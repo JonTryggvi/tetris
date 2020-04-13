@@ -10,6 +10,7 @@ body {
   margin:0;
   padding:0;
   min-height: 100vh;
+  position: relative;
 }
 h2 {
   font-size: 14px;
@@ -30,9 +31,17 @@ h2 {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  
 }
 .score-container {
   text-transform: uppercase;
+  li {
+    margin-bottom: 5px;
+  }
+  .active-player {
+    color: yellow;
+    text-shadow: 1px 1px 0 tomato;
+  }
 }
 .game-board {
   border: solid 2px;
@@ -53,6 +62,7 @@ h2 {
   flex-flow: row wrap;
   max-width: 200px;
   & .btnControll{
+    color: grey;
     display: inline-flex;
     height: 44px;
     flex-basis: 30%;
@@ -66,4 +76,20 @@ h2 {
   
   }
   
+}
+.music {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 25px;
+  height: 25px;
+  background: none;
+  border: none;
+  padding: 0;
+
+  svg {
+    path {
+      fill: white;
+    }
+  }
 }

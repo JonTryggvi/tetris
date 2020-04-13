@@ -173,7 +173,6 @@ class Board {
         p.shape.reverse();
       }
     }
-    
     return p;
   }
 
@@ -188,7 +187,6 @@ class Board {
         : lines === 4
         ? POINTS.TETRIS
         : 0;
-
     return (account.level + 1) * lineClearPoints;
   }
 }
