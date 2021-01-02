@@ -233,7 +233,7 @@ function get_topscore() {
     localStorage.topList = 'no file' !== res.responseText ? JSON.stringify(res) : '[]';
     set_top_list()
   })
-}
+} 
 
 function set_top_list() {
   let aToplist = localStorage.hasOwnProperty('topList') ? JSON.parse(localStorage.topList) : [];
@@ -283,7 +283,7 @@ btn.addEventListener('click', registerUser);
 function postAjax(dataObj, files = false) {
   let ajaxOptions = {
     type: 'POST',
-    url: 'https://dev.jontryggvi.is/ajax.php',
+    url: 'https://silentrecorders.io/ajax.php',
     data: dataObj,
     dataType: 'json',
     error(err) {
@@ -292,7 +292,7 @@ function postAjax(dataObj, files = false) {
     }
   }
   let ajaxOptionsWithFiles = {
-    url: 'https://dev.jontryggvi.is/ajax.php',
+    url: 'https://silentrecorders.io/ajax.php',
     type: 'POST',
     contentType: false,
     processData: false,
