@@ -446,17 +446,23 @@ body.touch-play .panel--stats,
 body.touch-play .panel--side {
   display: none;
 }
-/* The game area becomes a fixed full-viewport stage with the board centred. */
+/* The game area becomes a fixed stage sized to the *visual* viewport (set from
+   JS as --vv-h/--vv-top) so it fits iOS Safari's visible area, not the larger
+   layout viewport behind the address bar. Falls back to 100dvh. */
 body.touch-play .game {
   position: fixed;
-  inset: 0;
+  top: var(--vv-top, 0);
+  left: 0;
+  width: 100%;
+  height: var(--vv-h, 100dvh);
   z-index: 50;
   margin: 0;
-  padding: 72px 12px 20px;
+  padding: calc(var(--hud-h, 72px) + 8px) 12px 20px;
   gap: 0;
   align-items: center;
   justify-content: center;
   background: var(--basalt);
+  overflow: hidden;
 }
 /* No browser gesture handling on the board while playing — our JS owns it. */
 body.touch-play .board-wrap {
@@ -467,7 +473,7 @@ body.touch-play .board-wrap {
 
 .mplay {
   position: fixed;
-  top: 0;
+  top: var(--vv-top, 0);
   left: 0;
   right: 0;
   z-index: 60;

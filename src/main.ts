@@ -206,14 +206,55 @@ document.addEventListener('keydown', (e) => {
 // --- mobile fullscreen + touch gestures ------------------------------------
 // While playing on a touch device the board takes over the screen and page
 // scroll is locked; gestures on the board drive the pieces.
-function sizeBoardToViewport(): void {
-  // Reserve room for the HUD bar + padding, then fit 20 rows / 10 cols.
-  const reservedY = 96;
+// Fit the fullscreen stage to the *visual* viewport — the actually-visible area,
+// which on iOS Safari excludes the dynamic address bar / bottom toolbar. Using
+// window.innerHeight / 100vh there would size the board to the larger layout
+// viewport, so it overflowed behind Safari's chrome. Updated as the bars show/hide.
+function fitStage(): void {
+  const vv = window.visualViewport;
+  const h = vv ? vv.height : window.innerHeight;
+  const w = vv ? vv.width : window.innerWidth;
+  const top = vv ? vv.offsetTop : 0;
+  const root = document.documentElement.style;
+  root.setProperty('--vv-h', `${Math.round(h)}px`);
+  root.setProperty('--vv-top', `${Math.round(top)}px`);
+  // Measure the real HUD height (it grows with the safe-area inset on notched
+  // phones) and expose it so the stage pads the board below it. Reserve the HUD
+  // + the board's own chrome (12px padding ×2 + 4px border + 19 gaps × 2 = 66) +
+  // bottom breathing room, then fit 20 rows / 10 cols.
+  const hudH = mplay.offsetHeight || 72;
+  root.setProperty('--hud-h', `${hudH}px`);
+  const reservedY = hudH + 66 + 28;
   const reservedX = 24;
-  const cell = Math.floor(
-    Math.min((window.innerHeight - reservedY) / ROWS, (window.innerWidth - reservedX) / COLS),
-  );
-  document.documentElement.style.setProperty('--cell', `${Math.max(14, cell)}px`);
+  const cell = Math.floor(Math.min((h - reservedY) / ROWS, (w - reservedX) / COLS));
+  root.setProperty('--cell', `${Math.max(14, cell)}px`);
+}
+
+// Real fullscreen hides the browser chrome entirely where supported (Android
+// Chrome, desktop, iPad). iPhone Safari has no Fullscreen API, so this no-ops
+// there and the visual-viewport sizing above keeps the board within view.
+function requestGameFullscreen(): void {
+  const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+  try {
+    const p = el.requestFullscreen ? el.requestFullscreen() : el.webkitRequestFullscreen?.();
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+  } catch {
+    /* unsupported or denied — viewport fit handles it */
+  }
+  window.setTimeout(fitStage, 150); // re-fit once the chrome has hidden
+}
+
+function exitGameFullscreen(): void {
+  const d = document as Document & {
+    webkitExitFullscreen?: () => Promise<void>;
+    webkitFullscreenElement?: Element | null;
+  };
+  try {
+    if (document.fullscreenElement && document.exitFullscreen) void document.exitFullscreen();
+    else if (d.webkitFullscreenElement && d.webkitExitFullscreen) void d.webkitExitFullscreen();
+  } catch {
+    /* ignore */
+  }
 }
 
 function enterTouchPlay(): void {
@@ -221,9 +262,12 @@ function enterTouchPlay(): void {
   mplay.hidden = false;
   mPause.textContent = 'Pause';
   mHint.classList.remove('is-faded');
-  sizeBoardToViewport();
-  window.addEventListener('resize', sizeBoardToViewport);
-  window.addEventListener('orientationchange', sizeBoardToViewport);
+  fitStage();
+  window.visualViewport?.addEventListener('resize', fitStage);
+  window.visualViewport?.addEventListener('scroll', fitStage);
+  window.addEventListener('resize', fitStage);
+  window.addEventListener('orientationchange', fitStage);
+  requestGameFullscreen();
   // Fade the gesture hint after a few seconds.
   window.setTimeout(() => mHint.classList.add('is-faded'), 3500);
 }
@@ -232,9 +276,16 @@ function exitTouchPlay(): void {
   if (!document.body.classList.contains('touch-play')) return;
   document.body.classList.remove('touch-play');
   mplay.hidden = true;
-  document.documentElement.style.removeProperty('--cell');
-  window.removeEventListener('resize', sizeBoardToViewport);
-  window.removeEventListener('orientationchange', sizeBoardToViewport);
+  const root = document.documentElement.style;
+  root.removeProperty('--cell');
+  root.removeProperty('--vv-h');
+  root.removeProperty('--vv-top');
+  root.removeProperty('--hud-h');
+  window.visualViewport?.removeEventListener('resize', fitStage);
+  window.visualViewport?.removeEventListener('scroll', fitStage);
+  window.removeEventListener('resize', fitStage);
+  window.removeEventListener('orientationchange', fitStage);
+  exitGameFullscreen();
 }
 
 // Gesture recognition on the board: horizontal drag moves column-by-column,
