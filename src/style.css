@@ -1,0 +1,570 @@
+/* ---------------------------------------------------------------------------
+   Tetris — tokens + shared shell (ported from ../cv global.css and the
+   design board boards/Tetris.dc.html). Everything animated sits behind
+   prefers-reduced-motion at the bottom.
+--------------------------------------------------------------------------- */
+:root {
+  --basalt: #232326;
+  --basalt-deep: #17171a;
+  --night: #0b0b0d;
+  --snow: #f3f1ee;
+  --ash: #d6d3cf;
+  --rule: #5a5a5e;
+  --rule-soft: #8a8a8e;
+  --web: #f0746a;
+  --music: #a68bd6;
+  --photo: #7cc8d1;
+  --sun: #f4b04a;
+
+  --ui: 'Bricolage Grotesque', system-ui, sans-serif;
+  --body: 'Newsreader', Georgia, serif;
+
+  --gutter: 56px;
+  --cell: 32px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--basalt);
+  color: var(--snow);
+  font-family: var(--body);
+  font-size: 20px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--sun);
+  outline-offset: 4px;
+}
+
+@view-transition {
+  navigation: auto;
+}
+
+/* ---- keyframes ---------------------------------------------------------- */
+@keyframes drop {
+  0% { transform: translateY(-130%) rotate(-14deg); opacity: 0; }
+  55% { transform: translateY(7%) rotate(2deg); opacity: 1; }
+  80% { transform: translateY(-3%) rotate(-1deg); }
+}
+@keyframes pop {
+  from { transform: translateY(-22px) scale(0.6); opacity: 0; }
+}
+@keyframes land {
+  from { transform: translateY(-640px); opacity: 0; }
+  60% { opacity: 1; }
+}
+@keyframes fall {
+  0% { transform: translateY(0); opacity: 1; animation-timing-function: steps(9); }
+  70% { transform: translateY(324px); opacity: 1; }
+  90% { transform: translateY(324px); opacity: 1; }
+  100% { transform: translateY(324px); opacity: 0; }
+}
+@keyframes bob {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+@keyframes rise {
+  from { transform: translateY(24px); opacity: 0; }
+}
+@keyframes pulse {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+/* ---- shared header ------------------------------------------------------ */
+.page-head {
+  background: linear-gradient(180deg, var(--night) 0%, #15110f 55%, var(--basalt) 100%);
+}
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 40px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px var(--gutter);
+}
+.brand {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.3, 1.9, 0.5, 1);
+  animation: pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+}
+.brand:hover { transform: rotate(-3deg) scale(1.06); }
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  font-family: var(--ui);
+  font-weight: 500;
+  font-size: 16px;
+}
+.nav a {
+  padding: 10px 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(currentColor, currentColor) 0 calc(100% - 2px) / 0 2px no-repeat;
+  transition: background-size 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+}
+.nav a:nth-child(1) { animation-delay: 0.1s; }
+.nav a:nth-child(2) { animation-delay: 0.18s; }
+.nav a:nth-child(3) { animation-delay: 0.26s; }
+.nav a:nth-child(4) { animation-delay: 0.34s; }
+.nav a:nth-child(5) { animation-delay: 0.42s; }
+.nav a:hover,
+.nav a:focus-visible,
+.nav a[aria-current] { background-size: 100% 2px; }
+.nav a[aria-current] { color: var(--snow); }
+.nav .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: transform 0.35s cubic-bezier(0.3, 1.9, 0.5, 1);
+}
+.nav a:hover .dot { transform: scale(1.9); }
+
+/* ---- page title --------------------------------------------------------- */
+.page-title-wrap {
+  padding: 56px var(--gutter) 64px;
+}
+.page-title {
+  margin: 0;
+  font-family: var(--ui);
+  font-weight: 300;
+  font-size: 132px;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+.ch {
+  display: inline-block;
+  animation: drop 1s cubic-bezier(0.25, 0.8, 0.3, 1) backwards;
+  animation-delay: calc(0.3s + var(--i) * 0.08s);
+  transition: transform 0.35s cubic-bezier(0.3, 1.9, 0.5, 1), color 0.2s;
+  cursor: default;
+}
+.ch:hover { transform: translateY(-0.12em) rotate(-5deg) scale(1.06); }
+.ch:nth-of-type(5n + 1):hover { color: var(--web); }
+.ch:nth-of-type(5n + 2):hover { color: var(--music); }
+.ch:nth-of-type(5n + 3):hover { color: var(--photo); }
+.ch:nth-of-type(5n + 4):hover { color: var(--sun); }
+
+/* ---- game layout -------------------------------------------------------- */
+.game {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px 80px;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px var(--gutter) 120px;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.panel--stats { flex: 0 1 300px; }
+.panel--side { flex: 0 1 340px; }
+/* On the two-column layout the board is taller than the viewport, so pin the
+   side panels: the Next preview, score and controls stay in view while the tall
+   board scrolls past. (Below 1180px the panels stack/row, handled in responsive.) */
+@media (min-width: 1181px) {
+  .panel--stats,
+  .panel--side {
+    position: sticky;
+    top: 24px;
+    align-self: flex-start;
+  }
+}
+.label {
+  font-family: var(--ui);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--ash);
+}
+.score {
+  font-family: var(--ui);
+  font-weight: 800;
+  font-size: 72px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.stat-row { display: flex; gap: 40px; }
+.stat {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: 36px;
+  font-variant-numeric: tabular-nums;
+}
+.next-block .label { margin-bottom: 12px; }
+.nx {
+  display: grid;
+  grid-template-columns: repeat(4, 28px);
+  grid-auto-rows: 28px;
+  gap: 3px;
+}
+.nx-cell { background: transparent; border-radius: 2px; }
+.nx-cell.on { background: var(--c); animation: bob 1.4s ease-in-out infinite alternate; }
+.nx-cell.on:nth-child(2n) { animation-delay: 0.25s; }
+
+/* ---- board -------------------------------------------------------------- */
+.board-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 12px;
+  background: var(--basalt-deep);
+  border-top: 4px solid var(--sun);
+  overflow: hidden;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(10, var(--cell));
+  grid-auto-rows: var(--cell);
+  gap: 2px;
+  background: var(--basalt-deep);
+}
+.cell {
+  background: var(--basalt);
+  border-radius: 2px;
+}
+.cell.on { background: var(--c); }
+.cell.ghost {
+  background: color-mix(in srgb, var(--c) 18%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 45%, transparent);
+}
+.board.landing .cell.on { animation: land 0.7s cubic-bezier(0.3, 1.1, 0.5, 1) backwards; }
+
+/* Fading afterimage trail: an overlay grid aligned to the board. Tiles are
+   placed by grid-row/column at vacated cells and fade themselves out. */
+.trail {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  grid-template-columns: repeat(10, var(--cell));
+  grid-auto-rows: var(--cell);
+  gap: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
+.trail-tile {
+  background: var(--c);
+  border-radius: 2px;
+  opacity: 0.6;
+  box-shadow: 0 0 4px color-mix(in srgb, var(--c) 60%, transparent);
+  will-change: opacity, transform;
+  animation: trailfade 1s ease-out forwards;
+}
+@keyframes trailfade {
+  from { opacity: 0.6; transform: scale(1); }
+  40% { opacity: 0.4; }
+  to { opacity: 0; transform: scale(0.82); }
+}
+
+/* idle demo: a live piece falling on a loop (design board) */
+.fall {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  margin-left: calc(3 * (var(--cell) + 2px));
+  display: grid;
+  grid-template-columns: repeat(3, var(--cell));
+  grid-auto-rows: var(--cell);
+  gap: 2px;
+  pointer-events: none;
+  animation: fall 5s linear 2.6s infinite backwards;
+}
+.fall i { background: var(--sun); border-radius: 2px; }
+.fall i.e { background: transparent; }
+.board-wrap.playing .fall { display: none; }
+
+/* overlay shown when idle / paused / over */
+.board-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--basalt-deep) 72%, transparent);
+  backdrop-filter: blur(2px);
+}
+.board-overlay[hidden] { display: none; }
+.overlay-msg {
+  margin: 0;
+  font-family: var(--ui);
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--snow);
+}
+.overlay-msg strong { font-weight: 800; }
+
+/* ---- buttons ------------------------------------------------------------ */
+.controls-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn {
+  min-height: 48px;
+  padding: 0 28px;
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+  border: 0;
+  transition: transform 0.25s cubic-bezier(0.3, 1.9, 0.5, 1), background 0.2s, color 0.2s;
+}
+.btn:hover { transform: translateY(-4px) rotate(-1.5deg); }
+.btn:active { transform: scale(0.94); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn--primary { background: var(--snow); color: var(--basalt); }
+.btn--ghost { background: transparent; color: var(--snow); border: 2px solid var(--snow); }
+
+/* ---- high scores -------------------------------------------------------- */
+.panel-h {
+  margin: 0 0 12px;
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: 24px;
+}
+.scores { margin: 0; padding: 0; list-style: none; }
+.scores li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+  font-size: 20px;
+  transition: transform 0.3s cubic-bezier(0.3, 1.9, 0.5, 1), color 0.2s;
+  animation: rise 0.6s ease-out backwards;
+}
+.scores li:hover { transform: translateX(12px); color: var(--sun); }
+.scores li .s-rank { color: var(--ash); font-family: var(--ui); font-weight: 500; font-size: 16px; }
+.scores li .s-name { flex: 1 1 auto; }
+.scores li .s-score { font-family: var(--ui); font-weight: 700; font-variant-numeric: tabular-nums; }
+.scores li.is-you { color: var(--sun); }
+.scores li.is-you .s-name::after { content: ' ←'; }
+.scores-empty { color: var(--ash); border-top: 1px solid var(--rule); padding: 12px 0; }
+.controls-text { margin: 0; font-size: 20px; line-height: 1.6; color: var(--ash); }
+
+/* ---- footer ------------------------------------------------------------- */
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 48px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32px var(--gutter) 48px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--ui);
+  font-size: 15px;
+  color: var(--ash);
+}
+.site-footer .footer-mail { color: var(--snow); border-bottom: 1px solid var(--rule-soft); }
+.social { display: flex; gap: 28px; }
+.social a { display: inline-block; transition: transform 0.3s cubic-bezier(0.3, 1.9, 0.5, 1), color 0.2s; }
+.social a:hover { transform: translateY(-5px) rotate(-4deg); }
+.social a:nth-child(1):hover { color: var(--web); }
+.social a:nth-child(2):hover { color: var(--music); }
+.social a:nth-child(3):hover { color: var(--photo); }
+.social a:nth-child(4):hover { color: var(--sun); }
+
+/* ---- game over dialog --------------------------------------------------- */
+.dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--snow);
+  max-width: 420px;
+}
+.dialog::backdrop { background: color-mix(in srgb, var(--night) 78%, transparent); }
+.dialog form {
+  background: var(--basalt-deep);
+  border-top: 4px solid var(--sun);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.dialog-h { margin: 0; font-family: var(--ui); font-weight: 800; font-size: 32px; letter-spacing: -0.02em; }
+.dialog-summary { margin: 0; font-size: 20px; color: var(--ash); }
+.dialog-label { font-family: var(--ui); font-weight: 500; font-size: 16px; color: var(--ash); }
+.dialog-input {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: 24px;
+  padding: 12px 16px;
+  background: var(--basalt);
+  color: var(--snow);
+  border: 2px solid var(--rule);
+  text-transform: uppercase;
+}
+.dialog-input:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; border-color: var(--sun); }
+.dialog-status { margin: 0; min-height: 1.4em; font-size: 16px; color: var(--sun); }
+.dialog-status.is-error { color: var(--web); }
+.dialog-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ---- mobile fullscreen play --------------------------------------------- */
+/* Engaged (via body.touch-play, set from JS) when a game starts on a touch
+   device: the board takes over the screen, page scroll is locked, and gestures
+   on the board drive the pieces instead of scrolling. */
+.mplay { display: none; }
+.mplay:not([hidden]) { display: block; }
+
+body.touch-play {
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+}
+/* Hide the surrounding page chrome. */
+body.touch-play .page-head,
+body.touch-play .site-footer,
+body.touch-play .panel--stats,
+body.touch-play .panel--side {
+  display: none;
+}
+/* The game area becomes a fixed full-viewport stage with the board centred. */
+body.touch-play .game {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  margin: 0;
+  padding: 72px 12px 20px;
+  gap: 0;
+  align-items: center;
+  justify-content: center;
+  background: var(--basalt);
+}
+/* No browser gesture handling on the board while playing — our JS owns it. */
+body.touch-play .board-wrap {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.mplay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background: color-mix(in srgb, var(--basalt-deep) 94%, transparent);
+  border-bottom: 1px solid var(--rule);
+  padding: 10px 16px env(safe-area-inset-top, 0) 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+.mplay-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.mplay-stats {
+  display: flex;
+  gap: 20px;
+  font-family: var(--ui);
+}
+.mplay-stats span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.mplay-stats b {
+  font-weight: 800;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.mplay-stats small {
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+.mplay-actions { display: flex; gap: 8px; }
+.btn-mini {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: 15px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  background: var(--snow);
+  color: var(--basalt);
+  cursor: pointer;
+}
+.btn-mini--ghost { background: transparent; color: var(--snow); border: 2px solid var(--snow); }
+.mplay-hint {
+  margin: 8px 0 0;
+  font-family: var(--ui);
+  font-size: 13px;
+  color: var(--ash);
+  text-align: center;
+  transition: opacity 0.4s;
+}
+.mplay-hint.is-faded { opacity: 0; }
+
+/* ---- responsive --------------------------------------------------------- */
+@media (max-width: 1180px) {
+  .game { gap: 40px; }
+  /* Compact stat bar: lay Score/Lines/Level in a row, top-aligned, and drop the
+     Score to the same size as the others so the three labels + numbers line up. */
+  .panel--stats {
+    flex-basis: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 24px 48px;
+  }
+  .panel--stats .score { font-size: 36px; line-height: 1; }
+  .stat-row { gap: 48px; }
+}
+@media (max-width: 900px) {
+  :root { --cell: 28px; }
+  .page-title { font-size: 92px; }
+}
+@media (max-width: 700px) {
+  :root { --gutter: 20px; --cell: 7.6vw; }
+  body { font-size: 18px; }
+  .site-header { padding: 20px var(--gutter); }
+  .page-title-wrap { padding: 36px var(--gutter) 44px; }
+  .page-title { font-size: 68px; }
+  .game { padding: 20px var(--gutter) 80px; gap: 32px; }
+  .score { font-size: 56px; }
+  .panel--side { flex-basis: 100%; }
+}
+
+/* ---- motion off --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .fall,
+  .trail { display: none; }
+}

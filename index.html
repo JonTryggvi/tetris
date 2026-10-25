@@ -1,53 +1,138 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>corona Tetris</title>
-
-    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet"/>
-    <link rel="stylesheet" href="scss/styles.scss">
-</head>
-<body>
-    <button type="button" class="music"></button>
-    <div class="grid">
-        <div class="top-score">
-            <h2>Top score</h2>
-            <ol class="score-container"></ol>
-        </div>
-        <canvas id="board" class="game-board"></canvas>
-        <div class="right-column"> 
-            <div>
-                <h1>CORONA TETRIS</h1>
-                <h2>Based on <a href="https://medium.com/@michael.karen/learning-modern-javascript-with-tetris-92d532bcd057">Learning Modern JavaScript with Tetris</a> with slight changes in structure</h2>
-                <p>Top score: <span id="topscore">0</span></p>
-                <p>Score: <span id="score">0</span></p>
-                <p>Lines: <span id="lines">0</span></p>
-                <p>Level: <span id="level">0</span></p>
-                <canvas id="next" class="next"></canvas>
-            </div>
-            <div class="direction-controll">
-                <button class="btnControll" type="button" data-key-code="38">up</button>
-                <button class="btnControll" type="button" data-key-code="37">left</button class="btnControll">
-                <button class="btnControll" type="button" data-key-code="40">down</button type="button">
-                <button class="btnControll" type="button" data-key-code="39">right</button type="button">
-            </div>
-            <button type="button" class="play-button">Play</button>
-        </div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tetris — Jón Tryggvi</title>
+    <meta name="description" content="Tetris by Jón Tryggvi Unnarsson — play in the browser and chase the high-score board." />
+    <link rel="icon" href="./favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,700;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="page-head">
+      <header class="site-header">
+        <a class="brand" href="https://jontryggvi.is">Jón Tryggvi</a>
+        <nav class="nav" aria-label="Main">
+          <a href="https://jontryggvi.is/#web"><span class="dot" aria-hidden="true" style="background: var(--web)"></span>Web</a>
+          <a href="https://jontryggvi.is/#music"><span class="dot" aria-hidden="true" style="background: var(--music)"></span>Music</a>
+          <a href="https://jontryggvi.is/#photography"><span class="dot" aria-hidden="true" style="background: var(--photo)"></span>Photography</a>
+          <a href="https://cv.silentrecorders.io">CV</a>
+          <a href="/" aria-current="page">Tetris</a>
+        </nav>
+      </header>
+      <div class="page-title-wrap">
+        <h1 class="page-title" aria-label="Tetris">
+          <span aria-hidden="true"
+            ><span class="ch" style="--i: 0">T</span><span class="ch" style="--i: 1">e</span><span class="ch" style="--i: 2">t</span><span class="ch" style="--i: 3">r</span><span class="ch" style="--i: 4">i</span><span class="ch" style="--i: 5">s</span></span
+          >
+        </h1>
+      </div>
     </div>
-    <div class="modal-contianer" role="modal">
-        <div class="modal" >
-            <form id="user" class="modal-inner">
-                <input type="text" name="initails" placeholder="Type your initials" maxlength="3" aria-label="Player initials">
-                <div class="btn-container">
-                    <button type="button" class="keepbtn">Continue as <span class="has-username">name</span></button>
-                    <button type="button" class="btnSubm" disabled>Submit</button>
 
-                </div>
-            </form>
+    <main class="game">
+      <section class="panel panel--stats" aria-label="Game stats">
+        <div>
+          <div class="label">Score</div>
+          <div class="score" id="score">0</div>
         </div>
+        <div class="stat-row">
+          <div>
+            <div class="label">Lines</div>
+            <div class="stat" id="lines">0</div>
+          </div>
+          <div>
+            <div class="label">Level</div>
+            <div class="stat" id="level">0</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="board-wrap">
+        <div class="board" id="board" role="img" aria-label="Tetris board"></div>
+        <div class="trail" id="trail" aria-hidden="true"></div>
+        <div class="fall" aria-hidden="true"><i class="e"></i><i></i><i class="e"></i><i></i><i></i><i></i></div>
+        <div class="board-overlay" id="overlay">
+          <p class="overlay-msg" id="overlay-msg">Press <strong>New game</strong> to play</p>
+        </div>
+      </div>
+
+      <section class="panel panel--side">
+        <div class="next-block">
+          <div class="label">Next</div>
+          <div class="nx" id="next" aria-hidden="true"></div>
+        </div>
+        <div class="controls-row">
+          <button class="btn btn--primary" id="btn-start" type="button">New game</button>
+          <button class="btn btn--ghost" id="btn-pause" type="button" disabled>Pause</button>
+        </div>
+        <div>
+          <h2 class="panel-h">High scores</h2>
+          <ol class="scores" id="scores">
+            <li class="scores-empty">Loading…</li>
+          </ol>
+        </div>
+        <div>
+          <h2 class="panel-h">Controls</h2>
+          <p class="controls-text">
+            Arrow keys move and soft-drop. Up rotates (Q rotates the other way).
+            Space hard-drops. P pauses.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>© 2026 Jón Tryggvi Unnarsson</span>
+      <a class="footer-mail" href="mailto:jontryggvi@jontryggvi.is">jontryggvi@jontryggvi.is</a>
+      <span class="social">
+        <a href="#">Facebook</a><a href="#">Instagram</a><a href="#">LinkedIn</a><a href="#">X</a>
+      </span>
+    </footer>
+
+    <!-- Fullscreen HUD shown only while playing on a touch device. -->
+    <div class="mplay" id="mplay" hidden>
+      <div class="mplay-bar">
+        <div class="mplay-stats">
+          <span><b id="m-score">0</b><small>score</small></span>
+          <span><b id="m-lines">0</b><small>lines</small></span>
+          <span><b id="m-level">0</b><small>level</small></span>
+        </div>
+        <div class="mplay-actions">
+          <button class="btn-mini" id="m-pause" type="button">Pause</button>
+          <button class="btn-mini btn-mini--ghost" id="m-exit" type="button">Exit</button>
+        </div>
+      </div>
+      <p class="mplay-hint" id="mplay-hint">Tap to rotate · swipe to move · swipe ↓ to drop</p>
     </div>
-    <script src="app.js"></script>
-</body>
+
+    <dialog class="dialog" id="gameover">
+      <form method="dialog" id="gameover-form">
+        <h2 class="dialog-h">Game over</h2>
+        <p class="dialog-summary" id="gameover-summary"></p>
+        <label class="dialog-label" for="player-name">Your name for the board</label>
+        <input
+          class="dialog-input"
+          id="player-name"
+          name="player-name"
+          type="text"
+          maxlength="12"
+          autocomplete="off"
+          placeholder="AAA"
+          required
+        />
+        <p class="dialog-status" id="gameover-status" role="status"></p>
+        <div class="dialog-actions">
+          <button class="btn btn--primary" id="btn-submit" type="submit">Submit score</button>
+          <button class="btn btn--ghost" id="btn-skip" type="button">Skip</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

@@ -1,13 +1,19 @@
 {
-  "devDependencies": {
-    "@babel/core": "^7.0.0-0",
-    "@babel/preset-env": "^7.7.7",
-    "@babel/preset-react": "^7.7.4",
-    "babel-plugin-transform-class-properties": "^6.24.1",
-    "cssnano": "^4.1.10",
-    "sass": "^1.24.0"
+  "name": "tetris",
+  "version": "1.0.0",
+  "description": "Tetris for jontryggvi.is — TypeScript + Vite static build, wired to the WP high-score leaderboard.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
   },
-  "dependencies": {
-    "jquery": "^3.4.1"
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true
   }
 }
