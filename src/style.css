@@ -187,6 +187,17 @@ button:focus-visible {
 }
 .panel--stats { flex: 0 1 300px; }
 .panel--side { flex: 0 1 340px; }
+/* On the two-column layout the board is taller than the viewport, so pin the
+   side panels: the Next preview, score and controls stay in view while the tall
+   board scrolls past. (Below 1180px the panels stack/row, handled in responsive.) */
+@media (min-width: 1181px) {
+  .panel--stats,
+  .panel--side {
+    position: sticky;
+    top: 24px;
+    align-self: flex-start;
+  }
+}
 .label {
   font-family: var(--ui);
   font-weight: 500;
