@@ -35,10 +35,14 @@ export class Engine {
 
   // Diff buffer so we only touch cells whose colour changed.
   private rendered: string[] = new Array(COLS * ROWS).fill('');
+  // Cells the active piece filled last frame, for the fading afterimage trail.
+  private prevActive = new Set<string>();
 
   constructor(
     private cells: HTMLElement[],
     private nextCells: HTMLElement[],
+    private trailLayer: HTMLElement,
+    private trailEnabled: boolean,
     private hooks: EngineHooks,
   ) {}
 
@@ -59,6 +63,8 @@ export class Engine {
     this.lastTime = this.startTime;
     this.setStatus('playing');
     this.emitStats();
+    this.trailLayer.replaceChildren();
+    this.prevActive.clear();
     this.renderNext();
     cancelAnimationFrame(this.rafId);
     this.rafId = requestAnimationFrame(this.loop);
@@ -94,6 +100,7 @@ export class Engine {
     } else if (action === 'drop') {
       const distance = this.board.dropDistance();
       if (distance > 0) {
+        this.emitDropStreak(distance);
         this.board.move(0, distance);
         this.addScore(distance * POINTS.HARD_DROP);
       }
@@ -185,6 +192,8 @@ export class Engine {
       if (y >= 0) buffer[y][x] = value;
     });
 
+    this.updateTrail();
+
     for (let y = 0; y < ROWS; y++) {
       for (let x = 0; x < COLS; x++) {
         const i = y * COLS + x;
@@ -195,6 +204,51 @@ export class Engine {
         this.paintCell(this.cells[i], value);
       }
     }
+  }
+
+  // Leave a fading afterimage on cells the active piece just vacated (and that
+  // are now empty), so a moving/falling piece draws a short streak behind it.
+  private updateTrail(): void {
+    const active = new Set<string>();
+    this.board.current.eachCell((x, y) => {
+      if (y >= 0) active.add(`${x},${y}`);
+    });
+    if (this.trailEnabled) {
+      const color = this.board.current.color;
+      this.prevActive.forEach((key) => {
+        if (active.has(key)) return;
+        const [x, y] = key.split(',').map(Number);
+        if (y >= 0 && this.board.grid[y][x] === 0) this.spawnTrailTile(x, y, color, 0);
+      });
+    }
+    this.prevActive = active;
+  }
+
+  // A hard drop jumps in one step, so paint the whole swept column at once, with
+  // higher cells pre-faded (negative delay) so the streak trails upward.
+  private emitDropStreak(distance: number): void {
+    if (!this.trailEnabled) return;
+    const color = this.board.current.color;
+    const start: Array<{ x: number; y: number }> = [];
+    this.board.current.eachCell((x, y) => start.push({ x, y }));
+    for (let step = 0; step < distance; step++) {
+      const delay = -(distance - 1 - step) * 0.028;
+      for (const c of start) {
+        const y = c.y + step;
+        if (y >= 0) this.spawnTrailTile(c.x, y, color, delay);
+      }
+    }
+  }
+
+  private spawnTrailTile(x: number, y: number, color: string, delay: number): void {
+    const tile = document.createElement('div');
+    tile.className = 'trail-tile';
+    tile.style.gridColumn = String(x + 1);
+    tile.style.gridRow = String(y + 1);
+    tile.style.setProperty('--c', color);
+    if (delay) tile.style.animationDelay = `${delay}s`;
+    tile.addEventListener('animationend', () => tile.remove(), { once: true });
+    this.trailLayer.appendChild(tile);
   }
 
   private paintCell(el: HTMLElement, value: number): void {

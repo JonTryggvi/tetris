@@ -245,6 +245,33 @@ button:focus-visible {
 }
 .board.landing .cell.on { animation: land 0.7s cubic-bezier(0.3, 1.1, 0.5, 1) backwards; }
 
+/* Fading afterimage trail: an overlay grid aligned to the board. Tiles are
+   placed by grid-row/column at vacated cells and fade themselves out. */
+.trail {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  grid-template-columns: repeat(10, var(--cell));
+  grid-auto-rows: var(--cell);
+  gap: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
+.trail-tile {
+  background: var(--c);
+  border-radius: 2px;
+  opacity: 0.6;
+  box-shadow: 0 0 4px color-mix(in srgb, var(--c) 60%, transparent);
+  will-change: opacity, transform;
+  animation: trailfade 1s ease-out forwards;
+}
+@keyframes trailfade {
+  from { opacity: 0.6; transform: scale(1); }
+  40% { opacity: 0.4; }
+  to { opacity: 0; transform: scale(0.82); }
+}
+
 /* idle demo: a live piece falling on a loop (design board) */
 .fall {
   position: absolute;
@@ -266,6 +293,7 @@ button:focus-visible {
 .board-overlay {
   position: absolute;
   inset: 0;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -516,5 +544,6 @@ body.touch-play .board-wrap {
     animation: none !important;
     transition: none !important;
   }
-  .fall { display: none; }
+  .fall,
+  .trail { display: none; }
 }

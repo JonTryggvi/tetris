@@ -65,7 +65,9 @@ for (let i = 0; i < 16; i++) {
 // --- engine ----------------------------------------------------------------
 let lastSummary: GameSummary | null = null;
 
-const engine = new Engine(cells, nextCells, {
+const trailEl = $('trail');
+
+const engine = new Engine(cells, nextCells, trailEl, !prefersReducedMotion, {
   onStats: (s: Stats) => {
     scoreEl.textContent = String(s.score);
     linesEl.textContent = String(s.lines);
