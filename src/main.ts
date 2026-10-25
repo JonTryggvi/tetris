@@ -26,6 +26,19 @@ const scoresEl = $<HTMLOListElement>('scores');
 const startBtn = $<HTMLButtonElement>('btn-start');
 const pauseBtn = $<HTMLButtonElement>('btn-pause');
 
+const mplay = $('mplay');
+const mPause = $<HTMLButtonElement>('m-pause');
+const mExit = $<HTMLButtonElement>('m-exit');
+const mHint = $('mplay-hint');
+const mScore = $('m-score');
+const mLines = $('m-lines');
+const mLevel = $('m-level');
+
+// Coarse pointer = the primary input is touch (phones, tablets). This gates the
+// fullscreen takeover; hybrid laptops (fine pointer + touchscreen) stay on the
+// normal page. The board's touch gestures work regardless.
+const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
 const dialog = $<HTMLDialogElement>('gameover');
 const dialogForm = $<HTMLFormElement>('gameover-form');
 const dialogSummary = $('gameover-summary');
@@ -57,6 +70,9 @@ const engine = new Engine(cells, nextCells, {
     scoreEl.textContent = String(s.score);
     linesEl.textContent = String(s.lines);
     levelEl.textContent = String(s.level);
+    mScore.textContent = String(s.score);
+    mLines.textContent = String(s.lines);
+    mLevel.textContent = String(s.level);
   },
   onRunningChange: (running: boolean) => {
     pauseBtn.disabled = !running && !engine.isPaused;
@@ -65,6 +81,7 @@ const engine = new Engine(cells, nextCells, {
   },
   onGameOver: (summary: GameSummary) => {
     lastSummary = summary;
+    exitTouchPlay(); // back to the normal page so the dialog + board are reachable
     showOverlay('Game over');
     pauseBtn.disabled = true;
     openGameOverDialog(summary);
@@ -145,19 +162,27 @@ function newGame(): void {
   hideOverlay();
   pauseBtn.disabled = false;
   pauseBtn.textContent = 'Pause';
+  if (isTouch) enterTouchPlay();
   engine.start();
 }
 
-startBtn.addEventListener('click', newGame);
-pauseBtn.addEventListener('click', () => {
+function togglePause(): void {
   engine.togglePause();
-  if (engine.isPaused) {
-    showOverlay('Paused');
-    pauseBtn.textContent = 'Resume';
-  } else {
-    hideOverlay();
-    pauseBtn.textContent = 'Pause';
-  }
+  const paused = engine.isPaused;
+  if (paused) showOverlay('Paused');
+  else hideOverlay();
+  const label = paused ? 'Resume' : 'Pause';
+  pauseBtn.textContent = label;
+  mPause.textContent = label;
+}
+
+startBtn.addEventListener('click', newGame);
+pauseBtn.addEventListener('click', togglePause);
+mPause.addEventListener('click', togglePause);
+mExit.addEventListener('click', () => {
+  engine.stop();
+  exitTouchPlay();
+  renderDemo();
 });
 
 document.addEventListener('keydown', (e) => {
@@ -165,7 +190,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'p' || e.key === 'P') {
     if (engine.isPlaying || engine.isPaused) {
       e.preventDefault();
-      pauseBtn.click();
+      togglePause();
     }
     return;
   }
@@ -175,6 +200,124 @@ document.addEventListener('keydown', (e) => {
     engine.handle(action);
   }
 });
+
+// --- mobile fullscreen + touch gestures ------------------------------------
+// While playing on a touch device the board takes over the screen and page
+// scroll is locked; gestures on the board drive the pieces.
+function sizeBoardToViewport(): void {
+  // Reserve room for the HUD bar + padding, then fit 20 rows / 10 cols.
+  const reservedY = 96;
+  const reservedX = 24;
+  const cell = Math.floor(
+    Math.min((window.innerHeight - reservedY) / ROWS, (window.innerWidth - reservedX) / COLS),
+  );
+  document.documentElement.style.setProperty('--cell', `${Math.max(14, cell)}px`);
+}
+
+function enterTouchPlay(): void {
+  document.body.classList.add('touch-play');
+  mplay.hidden = false;
+  mPause.textContent = 'Pause';
+  mHint.classList.remove('is-faded');
+  sizeBoardToViewport();
+  window.addEventListener('resize', sizeBoardToViewport);
+  window.addEventListener('orientationchange', sizeBoardToViewport);
+  // Fade the gesture hint after a few seconds.
+  window.setTimeout(() => mHint.classList.add('is-faded'), 3500);
+}
+
+function exitTouchPlay(): void {
+  if (!document.body.classList.contains('touch-play')) return;
+  document.body.classList.remove('touch-play');
+  mplay.hidden = true;
+  document.documentElement.style.removeProperty('--cell');
+  window.removeEventListener('resize', sizeBoardToViewport);
+  window.removeEventListener('orientationchange', sizeBoardToViewport);
+}
+
+// Gesture recognition on the board: horizontal drag moves column-by-column,
+// a tap rotates, a vertical flick drops (down) or rotates the other way (up).
+let touchId: number | null = null;
+let startX = 0;
+let startY = 0;
+let lastStepX = 0;
+let startTime = 0;
+let movedCols = 0;
+
+function cellStep(): number {
+  const rect = cells[0].getBoundingClientRect();
+  return rect.width > 0 ? rect.width + 2 : 28;
+}
+
+boardWrap.addEventListener(
+  'touchstart',
+  (e: TouchEvent) => {
+    if (!engine.isPlaying || touchId !== null) return;
+    const t = e.changedTouches[0];
+    touchId = t.identifier;
+    startX = lastStepX = t.clientX;
+    startY = t.clientY;
+    startTime = performance.now();
+    movedCols = 0;
+    e.preventDefault();
+  },
+  { passive: false },
+);
+
+boardWrap.addEventListener(
+  'touchmove',
+  (e: TouchEvent) => {
+    if (touchId === null || !engine.isPlaying) return;
+    const t = findTouch(e.changedTouches);
+    if (!t) return;
+    e.preventDefault();
+    const step = cellStep();
+    while (t.clientX - lastStepX >= step) {
+      engine.handle('right');
+      lastStepX += step;
+      movedCols++;
+    }
+    while (lastStepX - t.clientX >= step) {
+      engine.handle('left');
+      lastStepX -= step;
+      movedCols++;
+    }
+  },
+  { passive: false },
+);
+
+boardWrap.addEventListener(
+  'touchend',
+  (e: TouchEvent) => {
+    if (touchId === null) return;
+    const t = findTouch(e.changedTouches);
+    touchId = null;
+    if (!t || !engine.isPlaying) return;
+    e.preventDefault();
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    const dt = performance.now() - startTime;
+    const TAP = 14;
+    const SWIPE = 28;
+    if (movedCols === 0 && Math.abs(dx) < TAP && Math.abs(dy) < TAP && dt < 300) {
+      engine.handle('rotateR'); // tap
+    } else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > SWIPE) {
+      engine.handle(dy > 0 ? 'drop' : 'rotateL'); // swipe down = drop, up = rotate other way
+    }
+  },
+  { passive: false },
+);
+
+boardWrap.addEventListener('touchcancel', () => {
+  touchId = null;
+});
+
+function findTouch(list: TouchList): Touch | null {
+  for (let i = 0; i < list.length; i++) {
+    if (list[i].identifier === touchId) return list[i];
+  }
+  return null;
+}
 
 // --- leaderboard -----------------------------------------------------------
 let youRank: number | null = null;

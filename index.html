@@ -93,6 +93,22 @@
       </span>
     </footer>
 
+    <!-- Fullscreen HUD shown only while playing on a touch device. -->
+    <div class="mplay" id="mplay" hidden>
+      <div class="mplay-bar">
+        <div class="mplay-stats">
+          <span><b id="m-score">0</b><small>score</small></span>
+          <span><b id="m-lines">0</b><small>lines</small></span>
+          <span><b id="m-level">0</b><small>level</small></span>
+        </div>
+        <div class="mplay-actions">
+          <button class="btn-mini" id="m-pause" type="button">Pause</button>
+          <button class="btn-mini btn-mini--ghost" id="m-exit" type="button">Exit</button>
+        </div>
+      </div>
+      <p class="mplay-hint" id="mplay-hint">Tap to rotate · swipe to move · swipe ↓ to drop</p>
+    </div>
+
     <dialog class="dialog" id="gameover">
       <form method="dialog" id="gameover-form">
         <h2 class="dialog-h">Game over</h2>
