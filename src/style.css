@@ -219,6 +219,7 @@ button:focus-visible {
   font-size: 36px;
   font-variant-numeric: tabular-nums;
 }
+.next-block .label { margin-bottom: 12px; }
 .nx {
   display: grid;
   grid-template-columns: repeat(4, 28px);
@@ -529,8 +530,17 @@ body.touch-play .board-wrap {
 /* ---- responsive --------------------------------------------------------- */
 @media (max-width: 1180px) {
   .game { gap: 40px; }
-  .panel--stats { flex-basis: 100%; }
-  .panel--stats { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 32px 48px; }
+  /* Compact stat bar: lay Score/Lines/Level in a row, top-aligned, and drop the
+     Score to the same size as the others so the three labels + numbers line up. */
+  .panel--stats {
+    flex-basis: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 24px 48px;
+  }
+  .panel--stats .score { font-size: 36px; line-height: 1; }
+  .stat-row { gap: 48px; }
 }
 @media (max-width: 900px) {
   :root { --cell: 28px; }
